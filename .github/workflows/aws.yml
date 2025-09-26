@@ -10,9 +10,8 @@ env:
   ECS_SERVICE: alfa-task-service
   ECS_CLUSTER: alfatech
   ECS_TASK_DEFINITION: .github/workflows/task-ecs.json
-  CONTAINER_NAME: alfa           
+  CONTAINER_NAME: alfa
                                              
-
 permissions:
   contents: read
 
