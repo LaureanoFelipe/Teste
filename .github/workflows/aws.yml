@@ -5,13 +5,13 @@ on:
     branches: [ "main" ]
 
 env:
-  AWS_REGION: us-east-2                  
-  ECR_REPOSITORY: alfa          
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: alfa
   ECS_SERVICE: alfa-task-service
   ECS_CLUSTER: alfatech
-  ECS_TASK_DEFINITION: .github/workflows/task-ecs.json
-  CONTAINER_NAME: alfa
-                                             
+  ECS_TASK_DEFINITION: .github/workflows/task-ecs.json   # <-- caminho do JSON sem logs
+  CONTAINER_NAME: alfa                                   # <-- deve bater com containerDefinitions[].name
+
 permissions:
   contents: read
 
@@ -42,12 +42,16 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        # Build a docker container and
-        # push it to ECR so that it can
-        # be deployed to ECS.
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    # (Opcional) Validação rápida: garante que o container "alfa" existe no JSON
+    - name: Validate container name in task def
+      run: |
+        sudo apt-get update && sudo apt-get install -y jq
+        jq -e '.containerDefinitions[] | select(.name=="'${CONTAINER_NAME}'")' \
+          "${ECS_TASK_DEFINITION}" > /dev/null
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
